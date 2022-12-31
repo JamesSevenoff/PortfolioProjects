@@ -1,0 +1,104 @@
+/*
+Covid 19 Data Exploration 
+Skills used: Joins, Windows Functions, Aggregate Functions, Converting Data Types, Importing Datasets to SQL, Importing Code into Github
+*/
+
+
+--Checking out what the table CovidDeaths looks like
+SELECT * 
+FROM custom-mix-281003.Project1_Covid.CovidDeaths 
+WHERE continent is not null
+ORDER BY 3,4;
+
+
+
+--SELECT data that we are going to be using
+
+SELECT Location, date, total_cases, new_cases, total_deaths, population
+FROM custom-mix-281003.Project1_Covid.CovidDeaths 
+ORDER BY 1,2;
+
+
+
+--Looking at Total cases vs Total Deaths
+--Shows probability of dying by contracting Covid by country
+SELECT Location, date, total_cases, total_deaths, (total_deaths/total_cases)*100 as DeathPercentage
+FROM custom-mix-281003.Project1_Covid.CovidDeaths 
+WHERE location = 'United States'
+ORDER BY 1,2;
+
+
+
+
+--Looking at Total Cases vs Population
+--Shows what percentage of population got covid
+--Can check out your own country by putting it in the WHERE function
+
+SELECT Location, date, total_cases, population, (total_cases/population)*100 as PercentPopulationInfected
+FROM custom-mix-281003.Project1_Covid.CovidDeaths 
+--WHERE location = 'United States'
+ORDER BY 1,2;
+
+
+
+
+--Looking at countries with Highest Infection Rate compared to Population 
+
+SELECT Location, population, MAX(total_cases) as HighestInfectionCount, MAX((total_cases/population))*100 as PercentPopulationInfected
+FROM custom-mix-281003.Project1_Covid.CovidDeaths 
+--WHERE location = 'United States'
+Group BY location, population
+ORDER BY PercentPopulationInfected DESC;
+
+
+
+
+--Showing Countries with Highest Death Count per Population
+
+SELECT Location, MAX(Total_deaths) as TotalDeathCount 
+FROM custom-mix-281003.Project1_Covid.CovidDeaths 
+--WHERE location = 'United States'
+WHERE continent is not null
+Group BY location
+ORDER BY TotalDeathCount DESC;
+
+
+
+
+-- LET'S BREAK THINGS DOWN BY CONTINENT 
+
+--Showing continents with the highest death count
+--From viewpoint I'm going to visualize this 
+
+SELECT continent, MAX(Total_deaths) as TotalDeathCount 
+FROM custom-mix-281003.Project1_Covid.CovidDeaths 
+--WHERE location = 'United States'
+WHERE continent is not null
+Group BY continent
+ORDER BY TotalDeathCount DESC;
+
+
+
+
+--GLOBAL NUMBERS
+
+SELECT SUM(new_cases) as total_cases, SUM(new_deaths) as total_deaths, SUM(new_deaths)/SUM(new_cases)*100 as DeathPercentage -- , total_deaths, (total_deaths/total_cases)*100 as DeathPercentage
+FROM custom-mix-281003.Project1_Covid.CovidDeaths 
+--WHERE location = 'United States'
+where continent is not null
+--GROUP BY date 
+ORDER BY 1,2;
+
+
+--Looking at Total Population vs Vaccinations
+-- Shows Percentage of Population that has recieved at least one Covid Vaccine
+
+
+SELECT dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations, SUM(vac.new_vaccinations) OVER (Partition by dea.location Order By dea.location,dea.date) as RollingPeopleVaccinated
+--, (RollingPeopleVaccinated/population)*100
+FROM custom-mix-281003.Project1_Covid.CovidDeaths dea
+JOIN custom-mix-281003.Project1_Covid.CovidVaccinationsTable vac 
+    ON dea.location = vac.location
+    and dea.date = vac.date
+WHERE dea.continent is not null
+ORDER BY 2,3;
